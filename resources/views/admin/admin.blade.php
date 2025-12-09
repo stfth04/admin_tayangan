@@ -3,12 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload File</title>
+    <title>Admin</title>
+    <link rel="icon" type="image/png" href="/logo_bps.png">
 
     {{-- Bootstrap --}}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
+        /* (CSS persis seperti yang kamu kirim) */
         /* ---------- General ---------- */
         body {
             background-color: #f2f6fa;
@@ -124,9 +126,7 @@
             font-size:14px; 
             width: 200px;
             padding-right: 70px;
-
-    }
-            
+        }
         .btn-play-all:hover, .btn-add-content:hover { background: #c6c5c5; }
         .playlist-empty { color:#8c8c8c; margin-top:100px; text-align:center; font-size:16px; }
 
@@ -149,7 +149,6 @@
         .d-none { 
         display: none !important; }
 
-
         .btn-back {
         width: 43px;
         height: 43px;
@@ -163,7 +162,6 @@
             margin-top:28px;
             margin-right: 35px;
         }
-
 
 .more-menu {
     position: absolute;
@@ -190,7 +188,6 @@
 .d-none {
     display: none !important;
 }
-
 
 .icon-more {
     position: absolute;
@@ -418,6 +415,75 @@
     opacity: 0.9;
 }
 
+
+/* ===== POPUP HAPUS (BARU, MENYAMAI JADWAL & GANTI NAMA) ===== */
+.popup-hapus {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.35);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.hapus-box {
+    width: 430px;
+    background: #e8f3fc;                 /* sama seperti popup lain */
+    border-radius: 18px;
+    padding: 30px 35px;
+    box-shadow: 0 8px 26px rgba(0,0,0,0.2);
+    text-align: center;
+}
+
+.hapus-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #1a1a1a;
+}
+
+.hapus-text {
+    font-size: 17px;
+    color: #333;
+    margin-bottom: 30px;
+}
+
+/* TOMBOL */
+.hapus-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.btn-hapus-cancel {
+    width: 50%;
+    padding: 10px 0;
+    border: none;
+    border-radius: 18px;
+    background: #d9d9d9;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-hapus-yes {
+    width: 50%;
+    padding: 10px 0;
+    border: none;
+    border-radius: 18px;
+    background: #206486;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-hapus-yes:hover {
+    opacity: 0.9;
+}
+
     </style>
 </head>
 
@@ -438,7 +504,7 @@
             <div id="date"></div>
         </div>
 
-        <form action="/logout" method="POST">
+        <form action="{{ route('logout') }}" method="POST">
             @csrf
             <button class="btn btn-light btn-sm ms-3 rounded-pill d-flex align-items-center gap-2">
                 <img src="/logout.png" alt="Logout Icon" width="18" height="18"> Log Out
@@ -510,6 +576,7 @@
                         <img id="previewImage" src="" alt="" style="display:none; max-width: 200px; margin-top:10px; margin-left:165px; border-radius:8px;">
                         <video id="previewVideo" controls style="display:none; max-width:200px; margin-top:10px; margin-left:165px; border-radius:8px;"></video>
 
+                        <!-- NOTE: name="file" supaya ContentController menerima -->
                         <input type="file" name="file" id="fileInput" hidden accept="image/*,video/*">
                     </div>
                 </div>
@@ -622,15 +689,19 @@
     <div id="playlistList" class="d-flex flex-wrap gap-3 mt-3">
         @foreach($playlists as $playlist)
             <div class="playlist-card"
+    
                  data-id="{{ $playlist->id }}"
                  data-name="{{ $playlist->nama_playlist }}">
                 <div class="playlist-thumb"></div>
                 <div class="playlist-info">
-                    <p class="playlist-title">{{ $playlist->nama_playlist }}</p>
+                    <p id="playlistName-{{ $playlist->id }}" class="playlist-title">
+                    {{ $playlist->nama_playlist }}
+                </p>
                 </div>
             </div>
         @endforeach
     </div>
+
 
     {{-- Popup Add Playlist --}}
     <div id="popupPlaylist" class="popup-playlist-overlay d-none" aria-hidden="true">
@@ -677,10 +748,10 @@
 
     // addToPlaylist: set konten id then open playlist tab
     function addToPlaylist(kontenId) {
-        const kontenInput = document.getElementById('konten_id');
-        if (kontenInput) kontenInput.value = kontenId;
-        openTab('playlist');
-    }
+    window.selectedKontenId = kontenId; // SIMPAN GLOBAL
+    openTab('playlist');
+}
+    
 
     // OPEN
 function openJadwal() {
@@ -710,7 +781,9 @@ function saveJadwal() {
 
  let activePlaylistId = null;
 
-function openGanti() {
+function openGanti(id, nama) {
+    activePlaylistId = id;
+    document.getElementById("namaBaru").value = nama;
     document.getElementById("popupGanti").classList.remove("d-none");
 }
 
@@ -719,12 +792,72 @@ function closeGanti() {
 }
 
 function saveGanti() {
-    let nama = document.getElementById("namaBaru").value;
-    if(nama.trim() === "") return;
+    let nama = document.getElementById("namaBaru").value.trim();
+    if (nama === "" || !activePlaylistId) return;
 
-    console.log("Nama baru:", nama); // Sesuaikan dengan logika kamu
+    fetch("{{ route('playlist.updateName') }}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-TOKEN": "{{ csrf_token() }}"
+        },
+        body: JSON.stringify({
+            id: activePlaylistId,
+            nama_playlist: nama
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            // Update nama pada card tanpa reload
+            location.reload();
+        }
+        closeGanti();
+    })
+    .catch(err => console.error(err));
+}
 
-    closeGanti();
+// =========== GLOBAL POPUP HAPUS ===========
+
+// Menyimpan ID playlist yang ingin dihapus
+let deleteId = null;
+
+// Tampilkan popup hapus
+function openHapus(id, name) {
+    deleteId = id;
+
+    document.getElementById("hapusText").innerText =
+        `Yakin ingin menghapus playlist "${name}"?`;
+
+    document.getElementById("popupHapus").classList.remove("d-none");
+}
+
+// Tutup popup hapus
+function closeHapus() {
+    deleteId = null;
+    document.getElementById("popupHapus").classList.add("d-none");
+}
+
+// Konfirmasi hapus
+function confirmHapus() {
+    if (!deleteId) return;
+
+    fetch(`/playlist/delete/${deleteId}`, {
+        method: "DELETE",
+        headers: {
+            "X-CSRF-TOKEN": "{{ csrf_token() }}"
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            const card = document.querySelector(`.playlist-card[data-id="${deleteId}"]`);
+            if (card) card.remove();
+
+            closeHapus();
+            openTab('playlist');
+        }
+    });
 }
 
 
@@ -754,14 +887,64 @@ function saveGanti() {
                 <!-- MENU YANG MUNCUL -->
                 <div class="more-menu d-none">
                     <div class="more-item" onclick="openJadwal()">Jadwal</div>
-                    <div class="more-item">Hapus Playlist</div>
-                    <div class="more-item"onclick="openGanti()">Ganti Nama</div>
+                    <div class="more-item" onclick="openHapus(${id},'${escapeHtml(name)}')">Hapus Playlist</div>
+                    <div class="more-item"onclick="openGanti(${id}, '${escapeHtml(name)}')">Ganti Nama</div>
                 </div>
             </div>
 
         `;
-            
-        
+
+
+// KONFIRMASI HAPUS
+let deleteId = null; // Menyimpan id playlist yang mau dihapus
+
+// === TAMPILKAN POPUP HAPUS ===
+function openHapus(id, name) {
+    deleteId = id;
+
+    // Isi teks konfirmasi
+    document.getElementById("hapusText").innerText =
+        `Yakin ingin menghapus playlist "${name}"?`;
+
+    // Tampilkan popup
+    document.getElementById("popupHapus").classList.remove("d-none");
+}
+
+// === TUTUP POPUP HAPUS ===
+function closeHapus() {
+    document.getElementById("popupHapus").classList.add("d-none");
+    deleteId = null;
+}
+
+// === KONFIRMASI HAPUS (AJAX) ===
+function confirmHapus() {
+    if (!deleteId) return;
+
+    fetch(`/playlist/delete/${deleteId}`, {
+        method: "DELETE",
+        headers: {
+            "X-CSRF-TOKEN": document
+                .querySelector('meta[name="csrf-token"]')
+                .getAttribute('content')
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+
+            // Hapus card dari halaman tanpa reload
+            const card = document.querySelector(`.playlist-card[data-id="${deleteId}"]`);
+            if (card) card.remove();
+
+            closeHapus();
+            openTab('playlist'); // jika ingin kembali ke tab playlist
+        }
+    })
+    .catch(err => console.error(err));
+}
+
+
+
 
             // show detail and hide playlist list
             document.getElementById('playlist').classList.add('d-none');
@@ -785,18 +968,22 @@ function saveGanti() {
 
         // click on dynamic "Tambah Konten +" inside playlist detail
         if (e.target.closest('.btn-add-content')) {
-            const btn = e.target.closest('.btn-add-content');
-            const playlistId = btn.getAttribute('data-playlist-id');
-            // transfer konten id & playlist id to hidden form and submit
-            const kontenId = document.getElementById('konten_id') ? document.getElementById('konten_id').value : null;
-            if (!kontenId) {
-                alert('Pilih konten dulu dari daftar Kelola Konten lalu tekan + untuk menambahkan ke playlist.');
-                return;
-            }
-            document.getElementById('playlist_id').value = playlistId;
-            document.getElementById('formAddContent').submit();
-            return;
-        }
+    const btn = e.target.closest('.btn-add-content');
+    const playlistId = btn.getAttribute('data-playlist-id');
+
+    const kontenId = window.selectedKontenId;
+    if (!kontenId) {
+        alert("Pilih konten dari tab Kelola Konten dulu.");
+        return;
+    }
+
+    document.getElementById('playlist_id').value = playlistId;
+    document.getElementById('konten_id').value = kontenId;
+
+    document.getElementById('formAddContent').submit();
+    return;
+}
+
     });
 
     // escape HTML helper
@@ -947,6 +1134,38 @@ document.addEventListener('click', function(e){
         </div>
     </div>
 
+</div>
+
+<!-- POPUP HAPUS PLAYLIST -->
+<div class="popup-hapus d-none" id="popupHapus">
+    <div class="hapus-box">
+        <h3 class="hapus-title">Hapus Playlist</h3>
+
+        <p id="hapusText" class="hapus-text">
+            Yakin ingin menghapus playlist?
+        </p>
+
+        <div class="hapus-actions">
+            <button class="btn-hapus-cancel" onclick="closeHapus()">TIDAK</button>
+            <button class="btn-hapus-yes" onclick="confirmHapus()">YA</button>
+        </div>
+    </div>
+</div>
+
+<div class="popup-hapus d-none" id="popupTambahKePlaylist">
+    <div class="hapus-box">
+        <h3 class="hapus-title">Tambah Ke Playlist</h3>
+
+        <p class="hapus-text">Pilih playlist untuk konten ini:</p>
+
+        <div id="playlistList" style="text-align:left; margin-bottom:20px;">
+            <!-- daftar playlist akan dimasukkan lewat JS -->
+        </div>
+
+        <div class="hapus-actions">
+            <button class="btn-hapus-cancel" onclick="closeTambahKePlaylist()">BATAL</button>
+        </div>
+    </div>
 </div>
 
 

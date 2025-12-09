@@ -4,6 +4,13 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ContentController;
+use App\Http\Controllers\PlaylistController;
+
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+*/
 
 // Halaman utama
 Route::get('/', function () {
@@ -25,28 +32,39 @@ Route::get('/admin', [ContentController::class, 'index'])
 // LOGOUT
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-// UPLOAD KONTEN
+// UPLOAD KONTEN (dipanggil dari form di admin.blade)
 Route::post('/upload', [ContentController::class, 'store'])->name('upload.store');
 
+// HAPUS KONTEN
+Route::delete('/contents/{id}', [ContentController::class, 'destroy'])
+    ->name('contents.destroy');
+
+// PLAYLIST: index (menampilkan halaman admin juga bisa pakai controller ini jika perlu)
+Route::get('/playlist', [PlaylistController::class, 'index'])->name('playlist.index');
+
+// Buat playlist baru
+Route::post('/playlist/store', [PlaylistController::class, 'store'])->name('playlist.store');
+
+// Tambah konten ke playlist (form hidden)
+Route::post('/playlist/content/add', [PlaylistController::class, 'addContent'])->name('playlist.addContent');
+
+// API: ambil detail playlist (dipanggil oleh JS loadPlaylistDetail)
+Route::get('/playlist/{id}', [PlaylistController::class, 'show'])->name('playlist.show');
+
+// Ajax update nama playlist
+Route::post('/playlist/update-name', [PlaylistController::class, 'updateName'])->name('playlist.updateName');
+
+// fallback (optional)
 Route::fallback(function () {
     return 'Fallback route KEPAKE — tandanya masih ada request ke /contents';
 });
 
-Route::delete('/contents/{id}', [ContentController::class, 'destroy'])
-    ->name('contents.destroy');
+Route::delete('/playlist/delete/{id}', [PlaylistController::class, 'destroy'])
+    ->name('playlist.destroy');
 
-Route::get('/playlist', [PlaylistController::class, 'index'])->name('playlist.index');
+Route::post('/playlist/add-content', [PlaylistController::class, 'addContent'])->name('playlist.addContent');
+Route::delete('/playlist/{id}', [PlaylistController::class, 'destroy'])->name('playlist.destroy');
 
-Route::post('/playlist/store', [PlaylistController::class, 'store'])->name('playlist.store');
-
-Route::post('/playlist/add/{playlist_id}/{content_id}', 
-    [PlaylistController::class, 'addContent'])->name('playlist.add');
+Route::get('/admin/playlist/{id}/content', [PlaylistController::class, 'getContent']);
 
 
-use App\Http\Controllers\PlaylistController;
-
-Route::get('/playlist', [PlaylistController::class, 'index'])->name('playlist.index');
-Route::post('/playlist/content/add', [PlaylistController::class, 'addContent'])->name('playlist.addContent');
-
-Route::post('/playlist/store', [PlaylistController::class, 'store'])
-     ->name('playlist.store');

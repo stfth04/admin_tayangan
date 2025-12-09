@@ -17,9 +17,13 @@ class Content extends Model
         'jenis'
     ];
 
-    public function playlists()
+   public function playlists()
 {
-    return $this->belongsToMany(Playlist::class, 'playlist_content', 'content_id', 'playlist_id');
+    return $this->belongsToMany(
+        Playlist::class,
+        'playlist_content',
+        'content_id',
+        'playlist_id'
+    );
 }
-
 }

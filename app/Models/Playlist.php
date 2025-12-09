@@ -16,9 +16,14 @@ class Playlist extends Model
         'tanggal_selesai',
     ];
 
-    // ➜ TARUH DI SINI
+    // RELASI BENAR
     public function contents()
     {
-        return $this->belongsToMany(Content::class, 'playlist_contents');
+        return $this->belongsToMany(
+            Content::class,      // model tujuan
+            'playlist_content',  // nama tabel pivot
+            'playlist_id',       // fk di pivot
+            'content_id'         // fk di pivot
+        );
     }
 }
