@@ -485,29 +485,258 @@
     opacity: 0.9;
 }
 /* pop up select playlist */
+/* Popup Select Playlist - Improved Design */
 .d-none { display: none; }
 #popupPilihPlaylist {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.5);
+    background: rgba(0, 0, 0, 0.7);
     display: flex;
     justify-content: center;
     align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.3s ease;
 }
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
 .popup-box {
-    background: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    width: 400px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+    padding: 25px;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+    display: flex;
+    flex-direction: column;
 }
+
+@keyframes slideUp {
+    from { transform: translateY(40px) scale(0.95); opacity: 0; }
+    to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.popup-box h3 {
+    margin: 0 0 20px 0;
+    color: #2c3e50;
+    font-size: 22px;
+    font-weight: 600;
+    padding-bottom: 15px;
+    border-bottom: 2px solid rgba(52, 152, 219, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.popup-box h3:before {
+    content: "🎵";
+    font-size: 20px;
+}
+
+#playlistList {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    overflow-y: auto;
+    padding: 10px 5px;
+    margin-bottom: 20px;
+    flex: 1;
+}
+
 .playlist-card {
-    border: 1px solid #ccc;
-    padding: 10px;
+    background: white;
+    border-radius: 12px;
+    padding: 15px;
     cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 2px solid transparent;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+    overflow: hidden;
 }
+
+.playlist-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(52, 152, 219, 0.15);
+    border-color: rgba(52, 152, 219, 0.3);
+}
+
 .playlist-card.selected-playlist {
-    border-color: #007bff;
-    background: #e7f1ff;
+    border-color: #3498db;
+    background: linear-gradient(135deg, #e3f2fd 0%, #f0f8ff 100%);
+    box-shadow: 0 8px 25px rgba(52, 152, 219, 0.2);
+}
+
+.playlist-card.selected-playlist:after {
+    content: "✓";
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: #3498db;
+    color: white;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.playlist-thumb {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #3498db, #2ecc71);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 20px;
+    flex-shrink: 0;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.playlist-card:nth-child(2n) .playlist-thumb {
+    background: linear-gradient(135deg, #9b59b6, #e74c3c);
+}
+
+.playlist-card:nth-child(3n) .playlist-thumb {
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+}
+
+.playlist-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.playlist-title {
+    margin: 0;
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.playlist-card:hover .playlist-title {
+    color: #3498db;
+}
+
+.popup-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.popup-actions button {
+    padding: 12px 28px;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.popup-actions button:first-child {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+}
+
+.popup-actions button:first-child:hover {
+    background: linear-gradient(135deg, #2980b9, #1f639b);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.3);
+}
+
+.popup-actions button:last-child {
+    background: transparent;
+    color: #7f8c8d;
+    border: 2px solid #e0e0e0;
+}
+
+.popup-actions button:last-child:hover {
+    background: #f8f9fa;
+    color: #2c3e50;
+    border-color: #bdc3c7;
+}
+
+/* Scrollbar Styling */
+#playlistList::-webkit-scrollbar {
+    width: 6px;
+}
+
+#playlistList::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
+}
+
+#playlistList::-webkit-scrollbar-thumb {
+    background: rgba(52, 152, 219, 0.3);
+    border-radius: 10px;
+}
+
+#playlistList::-webkit-scrollbar-thumb:hover {
+    background: rgba(52, 152, 219, 0.5);
+}
+
+/* Loading state for dynamic content */
+.playlist-card.loading {
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.6; }
+    100% { opacity: 1; }
+}
+
+/* Empty state */
+#playlistList:empty:before {
+    content: "Belum ada playlist yang tersedia";
+    color: #95a5a6;
+    text-align: center;
+    padding: 40px;
+    font-style: italic;
+    width: 100%;
+    display: block;
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .popup-box {
+        width: 95%;
+        padding: 20px;
+    }
+    
+    #playlistList {
+        grid-template-columns: 1fr;
+    }
+    
+    .popup-actions {
+        flex-direction: column;
+    }
+    
+    .popup-actions button {
+        width: 100%;
+    }
 }
     </style>
 </head>
@@ -642,6 +871,7 @@
 </div>
 
 {{-- ========================= PILIH PLAYLIST ========================= --}}
+{{-- ========================= PILIH PLAYLIST ========================= --}}
 <div id="popupPilihPlaylist" class="d-none">
     <div class="popup-box">
         <h3>Pilih Playlist</h3>
@@ -650,15 +880,24 @@
                 <div class="playlist-card"
                      data-id="{{ $playlist->id }}"
                      onclick="selectPlaylist({{ $playlist->id }}, this)">
-                    <div class="playlist-thumb"></div>
+                    <div class="playlist-thumb">
+                        @if(isset($playlist->thumbnail) && $playlist->thumbnail)
+                            <img src="{{ $playlist->thumbnail }}" alt="{{ $playlist->nama_playlist }}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">
+                        @else
+                            {{ substr($playlist->nama_playlist, 0, 1) }}
+                        @endif
+                    </div>
                     <div class="playlist-info">
                         <p class="playlist-title">{{ $playlist->nama_playlist }}</p>
+                        @if(isset($playlist->jumlah_lagu))
+                            <small style="color:#7f8c8d;font-size:12px;">{{ $playlist->jumlah_lagu }} lagu</small>
+                        @endif
                     </div>
                 </div>
             @endforeach
         </div>
         <div class="popup-actions mt-3">
-            <button onclick="submitAddToPlaylist()">TAMBAH</button>
+            <button onclick="submitAddToPlaylist()" id="submitBtn">TAMBAH KE PLAYLIST</button>
             <button onclick="closePopupPlaylist()">BATAL</button>
         </div>
     </div>
@@ -1346,6 +1585,29 @@ function submitAddToPlaylist() {
             alert(data.error);
         }
     });
+}
+
+// Optional: Add keyboard support
+document.addEventListener('keydown', function(e) {
+    const popup = document.getElementById('popupPilihPlaylist');
+    if (!popup.classList.contains('d-none')) {
+        if (e.key === 'Escape') {
+            closePopupPlaylist();
+        }
+        if (e.key === 'Enter' && document.querySelector('.selected-playlist')) {
+            submitAddToPlaylist();
+        }
+    }
+});
+
+// Optional: Add fade out animation
+function closePopupPlaylist() {
+    const popup = document.getElementById('popupPilihPlaylist');
+    popup.style.animation = 'fadeIn 0.3s ease reverse';
+    setTimeout(() => {
+        popup.classList.add('d-none');
+        popup.style.animation = '';
+    }, 200);
 }
 </script>
 <!-- ====================== END SCRIPT ====================== -->
