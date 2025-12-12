@@ -617,7 +617,19 @@
     </div>
 </div>
 
+{{-- ========================= PILIH PLAYLIST ========================= --}}
+<div class="mb-3">
+    <label for="default-playlist-id" class="form-label">Pilih Playlist:</label>
+    <select id="default-playlist-id" class="form-select">
+        <option value="">-- Pilih Playlist --</option>
+        @foreach($playlists as $playlist)
+            <option value="{{ $playlist->id }}">{{ $playlist->nama_playlist }}</option>
+        @endforeach
+    </select>
+</div>
+
 {{-- ========================= KELOLA TAB ========================= --}}
+
 <div id="kelola" class="tab-content {{ session('show_tab') == 'kelola' ? '' : 'd-none' }}">
     <div class="container mt-5">
         <div class="table-container">
@@ -626,56 +638,43 @@
                     <tr>
                         <th>No/ID</th>
                         <th>Konten</th>
-                        <th>Jenis Konten
-
-                        </th>
+                        <th>Jenis Konten</th>
                         <th>Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
-                @foreach($konten as $item)
-                    <tr>
-                        <td>{{ $loop->iteration }}</td>
+                    @foreach($konten as $item)
+                        <tr>
+                            <td>{{ $loop->iteration }}</td>
+                            <td>
+                                @php
+                                    $ext = strtolower(pathinfo($item->file ?? '', PATHINFO_EXTENSION));
+                                @endphp
 
-                        <td>
-                            @php
-                                $ext = strtolower(pathinfo($item->file ?? '', PATHINFO_EXTENSION));
-                            @endphp
+                                @if(in_array($ext, ['mp4','mov','avi','mkv','webm']))
+                                    <video src="{{ asset('storage/'.$item->file) }}" style="width:200px; height:auto;" controls></video>
+                                @else
+                                    <img src="{{ asset('storage/'.$item->file) }}" style="max-width:120px;">
+                                @endif
 
-                            @if(in_array($ext, ['mp4','mov','avi','mkv','webm']))
-                                <video src="{{ asset('storage/'.$item->file) }}" style="width:200px; height:auto;" controls></video>
-                            @else
-                                <img src="{{ asset('storage/'.$item->file) }}" style="max-width:120px;">
-                            @endif
+                                <br>
+                                <small><strong>{{ $item->nama_file }}</strong></small>
+                            </td>
+                            <td>{{ $item->jenis }}</td>
+                            <td>
+                                <button class="btn-aksi btn-primary" onclick="addToPlaylist({{ $item->id }})">+</button>
 
-                            <br>
-                            <small><strong>{{ $item->nama_file }}</strong></small>
-                        </td>
+                                {{-- Hapus Konten --}}
+                                <form action="{{ route('contents.destroy', $item->id) }}" method="POST" style="display:inline;">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button class="btn-aksi text-danger" onclick="return confirm('Hapus konten ini?')">Hapus</button>
+                                </form>
 
-                        <td>{{ $item->jenis }}</td>
-
-                        <td>
-                            <button class="btn-aksi" onclick="addToPlaylist({{ $item->id }})">+</button>
-
-                            {{-- hidden form untuk add content to playlist --}}
-                            <form id="formAddContent" action="{{ route('playlist.addContent') }}" method="POST" class="d-none">
-                                @csrf
-                                <input type="hidden" id="konten_id" name="konten_id">
-                                <input type="hidden" id="playlist_id" name="playlist_id">
-                            </form>
-
-                            {{-- HAPUS --}}
-                            <form action="{{ route('contents.destroy', $item->id) }}" method="POST" style="display:inline;">
-                                @csrf
-                                @method('DELETE')
-                                <button class="btn-aksi text-danger" onclick="return confirm('Hapus konten ini?')">Hapus</button>
-                            </form>
-
-
-                            <button class="btn-aksi text-primary">Edit</button>
-                        </td>
-                    </tr>
-                @endforeach
+                                <button class="btn-aksi text-secondary">Edit</button>
+                            </td>
+                        </tr>
+                    @endforeach
                 </tbody>
             </table>
         </div>
@@ -696,15 +695,10 @@
 
     <div id="playlistList" class="d-flex flex-wrap gap-3 mt-3">
         @foreach($playlists as $playlist)
-            <div class="playlist-card"
-    
-                 data-id="{{ $playlist->id }}"
-                 data-name="{{ $playlist->nama_playlist }}">
+            <div class="playlist-card" data-id="{{ $playlist->id }}" data-name="{{ $playlist->nama_playlist }}">
                 <div class="playlist-thumb"></div>
                 <div class="playlist-info">
-                    <p id="playlistName-{{ $playlist->id }}" class="playlist-title">
-                    {{ $playlist->nama_playlist }}
-                </p>
+                    <p id="playlistName-{{ $playlist->id }}" class="playlist-title">{{ $playlist->nama_playlist }}</p>
                 </div>
             </div>
         @endforeach
@@ -756,10 +750,16 @@
 
    
 function addToPlaylist(kontenId) {
-    const playlistId = document.querySelector('#default-playlist-id')?.value || 1;
+    const playlistSelect = document.querySelector('#default-playlist-id');
+    if (!playlistSelect || !playlistSelect.value) {
+        alert('Silakan pilih playlist terlebih dahulu!');
+        return;
+    }
+
+    const playlistId = playlistSelect.value;
     const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-    fetch('/playlist-content-add', { // GUNAKAN URL LANGSUNG, BUKAN BLADE SYNTAX
+    fetch('/playlist-content-add', {
         method: 'POST',
         headers: {
             "Content-Type": "application/json",
@@ -771,31 +771,20 @@ function addToPlaylist(kontenId) {
             playlist_id: playlistId
         })
     })
-    .then(response => {
-        // Cek jika response adalah HTML bukan JSON
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            return response.text().then(text => {
-                console.error('Server mengembalikan HTML:', text.substring(0, 200));
-                throw new Error('Server mengembalikan halaman HTML, bukan JSON');
-            });
-        }
-        return response.json();
-    })
+    .then(res => res.json())
     .then(data => {
-        console.log('Data dari server:', data);
         if (data.success) {
             alert('Konten berhasil ditambahkan ke playlist!');
-            openTab('playlist');
+            openTab('playlist'); // pindah ke tab playlist
         } else if (data.error) {
             alert(data.error);
         }
     })
     .catch(err => {
-        console.error('Error detail:', err);
+        console.error(err);
         alert('Gagal menambahkan ke playlist. Cek console untuk detail.');
     });
-}  
+}
 
 
     // OPEN
