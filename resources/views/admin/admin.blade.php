@@ -484,7 +484,31 @@
 .btn-hapus-yes:hover {
     opacity: 0.9;
 }
-
+/* pop up select playlist */
+.d-none { display: none; }
+#popupPilihPlaylist {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.popup-box {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    width: 400px;
+}
+.playlist-card {
+    border: 1px solid #ccc;
+    padding: 10px;
+    cursor: pointer;
+}
+.playlist-card.selected-playlist {
+    border-color: #007bff;
+    background: #e7f1ff;
+}
     </style>
 </head>
 
@@ -618,15 +642,28 @@
 </div>
 
 {{-- ========================= PILIH PLAYLIST ========================= --}}
-<div class="mb-3">
-    <label for="default-playlist-id" class="form-label">Pilih Playlist:</label>
-    <select id="default-playlist-id" class="form-select">
-        <option value="">-- Pilih Playlist --</option>
-        @foreach($playlists as $playlist)
-            <option value="{{ $playlist->id }}">{{ $playlist->nama_playlist }}</option>
-        @endforeach
-    </select>
+<div id="popupPilihPlaylist" class="d-none">
+    <div class="popup-box">
+        <h3>Pilih Playlist</h3>
+        <div id="playlistList" class="d-flex flex-wrap gap-3 mt-3">
+            @foreach($playlists as $playlist)
+                <div class="playlist-card"
+                     data-id="{{ $playlist->id }}"
+                     onclick="selectPlaylist({{ $playlist->id }}, this)">
+                    <div class="playlist-thumb"></div>
+                    <div class="playlist-info">
+                        <p class="playlist-title">{{ $playlist->nama_playlist }}</p>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+        <div class="popup-actions mt-3">
+            <button onclick="submitAddToPlaylist()">TAMBAH</button>
+            <button onclick="closePopupPlaylist()">BATAL</button>
+        </div>
+    </div>
 </div>
+
 
 {{-- ========================= KELOLA TAB ========================= --}}
 
@@ -662,7 +699,7 @@
                             </td>
                             <td>{{ $item->jenis }}</td>
                             <td>
-                                <button class="btn-aksi btn-primary" onclick="addToPlaylist({{ $item->id }})">+</button>
+                                <button class="btn-aksi" onclick="window.selectedKontenId={{ $item->id }}; openPopupPlaylist();">+</button>
 
                                 {{-- Hapus Konten --}}
                                 <form action="{{ route('contents.destroy', $item->id) }}" method="POST" style="display:inline;">
@@ -1261,6 +1298,54 @@ async function loadPlaylistDetail(playlistId) {
     html += `</tbody></table>`;
 
     document.getElementById('playlistDetailContent').innerHTML = html;
+}
+
+let selectedPlaylistId = null;
+
+function selectPlaylist(id, el) {
+    selectedPlaylistId = id;
+    document.querySelectorAll('.playlist-card').forEach(card => card.classList.remove('selected-playlist'));
+    el.classList.add('selected-playlist');
+}
+
+function openPopupPlaylist() {
+    document.getElementById('popupPilihPlaylist').classList.remove('d-none');
+}
+
+function closePopupPlaylist() {
+    document.getElementById('popupPilihPlaylist').classList.add('d-none');
+}
+
+function submitAddToPlaylist() {
+    if (!selectedPlaylistId || !window.selectedKontenId) {
+        alert("Silakan pilih playlist dan konten terlebih dahulu!");
+        return;
+    }
+
+    const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+    fetch('/playlist-content-add', {
+        method: 'POST',
+        headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "X-CSRF-TOKEN": token
+        },
+        body: JSON.stringify({
+            playlist_id: selectedPlaylistId,
+            konten_id: window.selectedKontenId
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert('Konten berhasil ditambahkan ke playlist!');
+            closePopupPlaylist();
+            openTab('playlist');
+        } else {
+            alert(data.error);
+        }
+    });
 }
 </script>
 <!-- ====================== END SCRIPT ====================== -->
