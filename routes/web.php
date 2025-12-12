@@ -45,26 +45,18 @@ Route::get('/playlist', [PlaylistController::class, 'index'])->name('playlist.in
 // Buat playlist baru
 Route::post('/playlist/store', [PlaylistController::class, 'store'])->name('playlist.store');
 
-// Tambah konten ke playlist (form hidden)
-Route::post('/playlist/content/add', [PlaylistController::class, 'addContent'])->name('playlist.addContent');
-
 // API: ambil detail playlist (dipanggil oleh JS loadPlaylistDetail)
 Route::get('/playlist/{id}', [PlaylistController::class, 'show'])->name('playlist.show');
 
 // Ajax update nama playlist
 Route::post('/playlist/update-name', [PlaylistController::class, 'updateName'])->name('playlist.updateName');
 
-// fallback (optional)
-Route::fallback(function () {
-    return 'Fallback route KEPAKE — tandanya masih ada request ke /contents';
-});
 
-Route::delete('/playlist/delete/{id}', [PlaylistController::class, 'destroy'])
-    ->name('playlist.destroy');
-
-Route::post('/playlist/add-content', [PlaylistController::class, 'addContent'])->name('playlist.addContent');
 Route::delete('/playlist/{id}', [PlaylistController::class, 'destroy'])->name('playlist.destroy');
 
 Route::get('/admin/playlist/{id}/content', [PlaylistController::class, 'getContent']);
+
+// Tambah konten ke playlist (form hidden)
+Route::post('/playlist-content-add', [PlaylistController::class, 'addContent'])->name('playlist.addContent');
 
 

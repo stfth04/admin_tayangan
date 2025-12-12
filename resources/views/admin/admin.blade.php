@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Admin</title>
     <link rel="icon" type="image/png" href="/logo_bps.png">
 
@@ -670,6 +671,7 @@
                                 <button class="btn-aksi text-danger" onclick="return confirm('Hapus konten ini?')">Hapus</button>
                             </form>
 
+
                             <button class="btn-aksi text-primary">Edit</button>
                         </td>
                     </tr>
@@ -685,6 +687,12 @@
     <div class="playlist-btn-wrapper">
         <button class="btn-add-playlist">+ Playlist</button>
     </div>
+
+    <form id="add-to-playlist-form" style="display: none;">
+        @csrf
+        <input type="hidden" name="konten_id" id="konten_id">
+        <input type="hidden" name="playlist_id" id="playlist_id">
+    </form>
 
     <div id="playlistList" class="d-flex flex-wrap gap-3 mt-3">
         @foreach($playlists as $playlist)
@@ -744,14 +752,51 @@
     function openTab(tabId) {
         document.querySelectorAll('.tab-content').forEach(el => el.classList.add('d-none'));
         document.getElementById(tabId).classList.remove('d-none');
-    }
+        }
 
-    // addToPlaylist: set konten id then open playlist tab
-    function addToPlaylist(kontenId) {
-    window.selectedKontenId = kontenId; // SIMPAN GLOBAL
-    openTab('playlist');
-}
-    
+   
+function addToPlaylist(kontenId) {
+    const playlistId = document.querySelector('#default-playlist-id')?.value || 1;
+    const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+    fetch('/playlist-content-add', { // GUNAKAN URL LANGSUNG, BUKAN BLADE SYNTAX
+        method: 'POST',
+        headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "X-CSRF-TOKEN": token
+        },
+        body: JSON.stringify({
+            konten_id: kontenId,
+            playlist_id: playlistId
+        })
+    })
+    .then(response => {
+        // Cek jika response adalah HTML bukan JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            return response.text().then(text => {
+                console.error('Server mengembalikan HTML:', text.substring(0, 200));
+                throw new Error('Server mengembalikan halaman HTML, bukan JSON');
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Data dari server:', data);
+        if (data.success) {
+            alert('Konten berhasil ditambahkan ke playlist!');
+            openTab('playlist');
+        } else if (data.error) {
+            alert(data.error);
+        }
+    })
+    .catch(err => {
+        console.error('Error detail:', err);
+        alert('Gagal menambahkan ke playlist. Cek console untuk detail.');
+    });
+}  
+
 
     // OPEN
 function openJadwal() {

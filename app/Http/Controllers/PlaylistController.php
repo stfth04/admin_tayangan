@@ -38,22 +38,28 @@ class PlaylistController extends Controller
     // TAMBAHKAN KONTEN KE PLAYLIST
     public function addContent(Request $request)
     {
-        $playlist_id = $request->input('playlist_id') ?? $request->input('playlistId');
-        $content_id = $request->input('konten_id') ?? $request->input('content_id');
+        $playlist_id = $request->input('playlist_id');
+        $content_id = $request->input('konten_id');
 
         if (!$playlist_id || !$content_id) {
+            if ($request->expectsJson()) {
+                return response()->json(['error' => 'Playlist atau konten tidak ditemukan.']);
+            }
             return back()->withErrors('Playlist atau konten tidak ditemukan.');
         }
 
         $playlist = Playlist::findOrFail($playlist_id);
-
-        // attach (aman dari double insert)
         $playlist->contents()->syncWithoutDetaching([$content_id]);
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true]);
+        }
 
         return back()
             ->with('success', 'Konten ditambahkan ke playlist.')
             ->with('show_tab', 'playlist');
     }
+
 
     // UPDATE NAMA PLAYLIST via AJAX
     public function updateName(Request $request)
