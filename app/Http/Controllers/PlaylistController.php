@@ -116,26 +116,25 @@ class PlaylistController extends Controller
     }
 
     public function getContent($id)
-{
-    $playlist = Playlist::findOrFail($id);
+    {
+        $playlist = Playlist::findOrFail($id);
 
-    $konten = DB::table('playlist_content as pc')
-        ->join('contents as c', 'pc.content_id', '=', 'c.id')
-        ->where('pc.playlist_id', $id)
-        ->orderBy('pc.`order`')            // hati-hati dengan reserved keyword
-        ->select(
-            'pc.id as pc_id',
-            'pc.`order` as sort_order',    // alias aman
-            'pc.duration',
-            'c.file',
-            'c.nama_file'
-        )
-        ->get();
+        $konten = DB::table('playlist_content as pc')
+            ->join('contents as c', 'pc.content_id', '=', 'c.id')
+            ->where('pc.playlist_id', $id)
+            ->select([
+                'pc.id as pc_id',
+                DB::raw('pc.`order` as sort_order'),
+                'pc.duration',
+                'c.file',
+                'c.nama_file'
+            ])
+            ->orderByRaw('pc.`order` ASC')
+            ->get();
 
-    return response()->json([
-        'playlist' => $playlist,
-        'contents' => $konten
-    ]);
-}
-
+        return response()->json([
+            'playlist' => $playlist,
+            'contents' => $konten
+        ]);
+    }
 }
