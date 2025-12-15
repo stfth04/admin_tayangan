@@ -47,8 +47,15 @@ class PlaylistController extends Controller
             $content = Content::findOrFail($content_id);
 
             $duration = 0;
-            $path = storage_path('app/public/' . $content->file);
-            $ext = strtolower(pathinfo($content->file, PATHINFO_EXTENSION));
+
+            // NORMALISASI PATH WINDOWS
+            $fileRelativePath = str_replace('\\', '/', $content->file);
+
+            // contoh: uploads/Tes.mp4
+            $path = storage_path('app/public/' . $fileRelativePath);
+
+
+            $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
 
             if (in_array($ext, ['mp4', 'mov', 'avi', 'mkv', 'webm']) && file_exists($path)) {
                 try {
@@ -60,12 +67,15 @@ class PlaylistController extends Controller
                     $duration = (int) $ffprobe
                         ->format($path)
                         ->get('duration');
+                    \Log::info('VIDEO DURATION', [
+                        'duration' => $duration,
+                        'file' => $path
+                    ]);
 
                 } catch (\Throwable $e) {
-                    // INI PENTING: jangan lempar error ke JS
                     \Log::error('FFProbe error', [
-                        'message' => $e->getMessage(),
-                        'path' => $path
+                        'file' => $path,
+                        'error' => $e->getMessage()
                     ]);
                     $duration = 0;
                 }
