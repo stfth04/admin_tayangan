@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Playlist;
 use App\Models\Content;
 use App\Models\PlaylistContent; // WAJIB untuk pivot
+use FFMpeg\FFProbe;
 
 class PlaylistController extends Controller
 {
@@ -38,27 +39,61 @@ class PlaylistController extends Controller
     // TAMBAHKAN KONTEN KE PLAYLIST
     public function addContent(Request $request)
     {
-        $playlist_id = $request->input('playlist_id');
-        $content_id = $request->input('konten_id');
+        try {
+            $playlist_id = $request->playlist_id;
+            $content_id = $request->konten_id;
 
-        if (!$playlist_id || !$content_id) {
-            if ($request->expectsJson()) {
-                return response()->json(['error' => 'Playlist atau konten tidak ditemukan.']);
+            $playlist = Playlist::findOrFail($playlist_id);
+            $content = Content::findOrFail($content_id);
+
+            $duration = 0;
+            $path = storage_path('app/public/' . $content->file);
+            $ext = strtolower(pathinfo($content->file, PATHINFO_EXTENSION));
+
+            if (in_array($ext, ['mp4', 'mov', 'avi', 'mkv', 'webm']) && file_exists($path)) {
+                try {
+                    $ffprobe = FFProbe::create([
+                        'ffprobe.binaries' => config('services.ffmpeg.ffprobe'),
+                        'ffmpeg.binaries' => config('services.ffmpeg.ffmpeg'),
+                    ]);
+
+                    $duration = (int) $ffprobe
+                        ->format($path)
+                        ->get('duration');
+
+                } catch (\Throwable $e) {
+                    // INI PENTING: jangan lempar error ke JS
+                    \Log::error('FFProbe error', [
+                        'message' => $e->getMessage(),
+                        'path' => $path
+                    ]);
+                    $duration = 0;
+                }
             }
-            return back()->withErrors('Playlist atau konten tidak ditemukan.');
+
+
+
+            DB::table('playlist_content')->insert([
+                'playlist_id' => $playlist_id,
+                'content_id' => $content_id,
+                'duration' => $duration,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Konten berhasil ditambahkan ke playlist'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        $playlist = Playlist::findOrFail($playlist_id);
-        $playlist->contents()->syncWithoutDetaching([$content_id]);
-
-        if ($request->expectsJson()) {
-            return response()->json(['success' => true]);
-        }
-
-        return back()
-            ->with('success', 'Konten ditambahkan ke playlist.')
-            ->with('show_tab', 'playlist');
     }
+
 
 
     // UPDATE NAMA PLAYLIST via AJAX

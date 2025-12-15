@@ -226,6 +226,7 @@
             background-color: white;
             border-radius: 10px;
             padding: 20px;
+
         }
 
         thead {
@@ -870,6 +871,7 @@
 </head>
 
 <body>
+
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg px-4 py-3" style="background-color: #336F97;">
         <div class="container-fluid">
@@ -1092,55 +1094,56 @@
         </div>
     </div>
 
-    {{-- ========================= PLAYLIST TAB ========================= --}}
-    <div id="playlist" class="tab-content {{ session('show_tab') == 'playlist' ? '' : 'd-none' }}">
+    <!-- ================= PLAYLIST TAB ================= -->
+    <div id="playlist" class="tab-content">
+
         <div class="playlist-btn-wrapper">
             <button class="btn-add-playlist">+ Playlist</button>
         </div>
 
-        <form id="add-to-playlist-form" style="display: none;">
-            @csrf
-            <input type="hidden" name="konten_id" id="konten_id">
-            <input type="hidden" name="playlist_id" id="playlist_id">
-        </form>
-
-        <div id="playlistList" class="d-flex flex-wrap gap-3 mt-3">
+        <div id="playlistListMain" class="d-flex flex-wrap gap-3 mt-3">
             @foreach ($playlists as $playlist)
-                <div class="playlist-card" data-id="{{ $playlist->id }}"
-                    data-name="{{ $playlist->nama_playlist }}">
+                <div class="playlist-card" data-id="{{ $playlist->id }}">
                     <div class="playlist-thumb"></div>
                     <div class="playlist-info">
-                        <p id="playlistName-{{ $playlist->id }}" class="playlist-title">
-                            {{ $playlist->nama_playlist }}</p>
+                        <p class="playlist-title">{{ $playlist->nama_playlist }}</p>
                     </div>
                 </div>
             @endforeach
         </div>
 
-
-        {{-- Popup Add Playlist --}}
-        <div id="popupPlaylist" class="popup-playlist-overlay d-none" aria-hidden="true">
-            <div class="popup-playlist-box" role="dialog" aria-modal="true">
+        <!-- Popup tambah playlist (BOLEH DI SINI) -->
+        <div id="popupPlaylist" class="popup-playlist-overlay d-none">
+            <div class="popup-playlist-box">
                 <h3 class="popup-title">Beri nama playlist</h3>
+
                 <input type="text" id="playlistTitle" class="popup-input" placeholder="Judul">
 
                 <form action="{{ route('playlist.store') }}" method="POST" id="formPlaylist">
                     @csrf
                     <input type="hidden" id="judul_playlist" name="judul">
+
                     <button type="submit" class="btn-buat-playlist">BUAT</button>
+                    <button type="button" onclick="closePopupAddPlaylist()">BATAL</button>
                 </form>
             </div>
         </div>
-    </div>
 
-    {{-- ========================= PLAYLIST DETAIL (local client-side detail) ========================= --}}
-    <div id="playlistDetail" class="tab-content d-none">
-        {{-- If no playlist selected, show message --}}
-        <div id="playlistDetailContent">
-            <h2 class="playlisttitle">Pilih playlist</h2>
-            <p class="playlist-empty">Pilih playlist di tab Playlist atau buat baru.</p>
-        </div>
     </div>
+    <!-- ================= END PLAYLIST TAB ================= -->
+
+
+    <!-- ================= PLAYLIST DETAIL (WAJIB DI LUAR) ================= -->
+    <div id="playlistDetail" class="tab-content d-none">
+
+        <div id="playlistDetailContent">
+            <h2>Detail Playlist</h2>
+            <p>Konten playlist akan muncul di sini</p>
+        </div>
+
+    </div>
+    <!-- ================= END PLAYLIST DETAIL ================= -->
+
 
 
     {{-- ========================= SCRIPTS (single place) ========================= --}}
@@ -1184,19 +1187,21 @@
                         playlist_id: playlistId
                     })
                 })
-                .then(res => res.json())
+                .then(res => {
+                    if (!res.ok) throw new Error('Server error');
+                    return res.json();
+                })
                 .then(data => {
                     if (data.success) {
-                        alert('Konten berhasil ditambahkan ke playlist!');
-                        openTab('playlist'); // pindah ke tab playlist
-                    } else if (data.error) {
-                        alert(data.error);
+                        alert(data.message);
+                    } else {
+                        alert(data.error ?? 'Gagal menambahkan konten');
                     }
                 })
                 .catch(err => {
-                    console.error(err);
-                    alert('Gagal menambahkan ke playlist. Cek console untuk detail.');
+                    alert('Gagal menambahkan konten ke playlist');
                 });
+
         }
 
 
@@ -1306,16 +1311,21 @@
                     }
                 });
         }
-        document.addEventListener('click', function(e) {
-            const card = e.target.closest('.playlist-card');
-            if (!card) return;
+        document
+            .querySelector('#playlist')
+            .addEventListener('click', function(e) {
 
-            const playlistId = card.dataset.id;
-            loadPlaylistDetail(playlistId);
+                const card = e.target.closest('.playlist-card');
+                if (!card) return;
 
-            document.getElementById('playlist').classList.add('d-none');
-            document.getElementById('playlistDetail').classList.remove('d-none');
-        });
+                const playlistId = card.dataset.id;
+                if (!playlistId) return;
+
+                loadPlaylistDetail(playlistId);
+
+                document.getElementById('playlist').classList.add('d-none');
+                document.getElementById('playlistDetail').classList.remove('d-none');
+            });
 
 
 
@@ -1492,9 +1502,9 @@
 
             <p class="hapus-text">Pilih playlist untuk konten ini:</p>
 
-            <div id="playlistList" style="text-align:left; margin-bottom:20px;">
-                <!-- daftar playlist akan dimasukkan lewat JS -->
-            </div>
+            {{-- <div id="playlistList" style="text-align:left; margin-bottom:20px;">
+                    <!-- daftar playlist akan dimasukkan lewat JS -->
+                </div> --}}
 
             <div class="hapus-actions">
                 <button class="btn-hapus-cancel" onclick="closeTambahKePlaylist()">BATAL</button>
@@ -1524,9 +1534,10 @@
                 <table class="table table-bordered">
                     <thead>
                         <tr>
-                            <th>No</th>
-                            <th>Preview</th>
-                            <th>Nama File</th>
+                            <th>Urutan</th>
+                            <th>Konten</th>
+                            <th>Durasi</th>
+                            <th>Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1537,11 +1548,11 @@
                                 : `<img src="/storage/${item.file}" style="width:160px">`;
 
                             return `
-                                <tr>
-                                    <td>${i + 1}</td>
-                                    <td>${preview}</td>
-                                    <td>${escapeHtml(item.nama_file)}</td>
-                                </tr>`;
+                                                                    <tr>
+                                                                        <td>${i + 1}</td>
+                                                                        <td>${preview}</td>
+                                                                        <td>${item.duration ?? '-'}</td>
+                                                                    </tr>`;
                         }).join('')}
                     </tbody>
                 </table>
@@ -1649,6 +1660,24 @@
                 popup.style.animation = '';
             }, 200);
         }
+        // add playlist 
+        document.addEventListener('DOMContentLoaded', function() {
+            const btnAddPlaylist = document.querySelector('.btn-add-playlist');
+            const popupPlaylist = document.getElementById('popupPlaylist');
+
+            if (btnAddPlaylist && popupPlaylist) {
+                btnAddPlaylist.addEventListener('click', function() {
+                    popupPlaylist.classList.remove('d-none');
+                });
+            }
+        });
+
+        function closePopupAddPlaylist() {
+            document.getElementById('popupPlaylist').classList.add('d-none');
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            showTab('upload');
+        });
     </script>
     <!-- ====================== END SCRIPT ====================== -->
 
