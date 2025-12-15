@@ -657,7 +657,6 @@
         }
 
         .popup-box h3:before {
-            content: "🎵";
             font-size: 20px;
         }
 
@@ -1022,8 +1021,8 @@
                         </div>
                         <div class="playlist-info">
                             <p class="playlist-title">{{ $playlist->nama_playlist }}</p>
-                            @if (isset($playlist->jumlah_lagu))
-                                <small style="color:#7f8c8d;font-size:12px;">{{ $playlist->jumlah_lagu }} lagu</small>
+                            @if (isset($playlist->jumlah_content))
+                                <small style="color:#7f8c8d;font-size:12px;">{{ $playlist->jumlah_content }} lagu</small>
                             @endif
                         </div>
                     </div>
@@ -1104,13 +1103,28 @@
         <div id="playlistListMain" class="d-flex flex-wrap gap-3 mt-3">
             @foreach ($playlists as $playlist)
                 <div class="playlist-card" data-id="{{ $playlist->id }}">
-                    <div class="playlist-thumb"></div>
-                    <div class="playlist-info">
-                        <p class="playlist-title">{{ $playlist->nama_playlist }}</p>
+
+                    <div class="playlist-thumb">
+                        @if (!empty($playlist->thumb_auto))
+                            <img src="{{ asset($playlist->thumb_auto) }}" alt="{{ $playlist->nama_playlist }}"
+                                class="playlist-thumb-img">
+                        @else
+                            <div class="playlist-thumb-empty">
+                                {{ strtoupper(substr($playlist->nama_playlist, 0, 1)) }}
+                            </div>
+                        @endif
                     </div>
+
+                    <div class="playlist-info">
+                        <div class="playlist-title">
+                            {{ $playlist->nama_playlist }}
+                        </div>
+                    </div>
+
                 </div>
             @endforeach
         </div>
+
 
         <!-- Popup tambah playlist (BOLEH DI SINI) -->
         <div id="popupPlaylist" class="popup-playlist-overlay d-none">
@@ -1294,23 +1308,30 @@
         function confirmHapus() {
             if (!deleteId) return;
 
-            fetch(`/playlist/delete/${deleteId}`, {
+            fetch(`/playlist/${deleteId}`, {
                     method: "DELETE",
                     headers: {
-                        "X-CSRF-TOKEN": "{{ csrf_token() }}"
+                        "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                        "Accept": "application/json"
                     }
                 })
                 .then(res => res.json())
                 .then(data => {
                     if (data.success) {
-                        const card = document.querySelector(`.playlist-card[data-id="${deleteId}"]`);
+                        const card = document.querySelector(
+                            `.playlist-card[data-id="${deleteId}"]`
+                        );
                         if (card) card.remove();
 
                         closeHapus();
                         openTab('playlist');
+                    } else {
+                        alert(data.message);
                     }
-                });
+                })
+                .catch(err => console.error(err));
         }
+
         document
             .querySelector('#playlist')
             .addEventListener('click', function(e) {
@@ -1548,11 +1569,11 @@
                                 : `<img src="/storage/${item.file}" style="width:160px">`;
 
                             return `
-                                                                        <tr>
-                                                                            <td>${i + 1}</td>
-                                                                            <td>${preview}</td>
-                                                                            <td>${typeof item.duration === 'number' ? item.duration + 's' : '-'}</td>
-                                                                        </tr>`;
+                                                                                        <tr>
+                                                                                            <td>${i + 1}</td>
+                                                                                            <td>${preview}</td>
+                                                                                            <td>${typeof item.duration === 'number' ? item.duration + 's' : '-'}</td>
+                                                                                        </tr>`;
                         }).join('')}
                     </tbody>
                 </table>
@@ -1560,21 +1581,44 @@
                 }
 
                 document.getElementById('playlistDetailContent').innerHTML = `
-            <div class="playlist-header">
-                <img src="{{ asset('logoback.png') }}" class="btn-back"
-                     onclick="openTab('playlist')" />
-                <h2 class="playlisttitle">${escapeHtml(playlist.nama_playlist)}</h2>
-            </div>
+                    <div class="playlist-header" style="position:relative;">
 
-            <div class="playlist-detail-buttons">
-                <button class="btn-play-all">► Putar Semua</button>
-                <button class="btn-add-content" data-playlist-id="${playlist.id}">
-                    Tambah Konten +
-                </button>
-            </div>
+                        <img src="/logoback.png" class="btn-back" onclick="openTab('playlist')" />
 
-            ${rows}
-        `;
+                        <h2 class="playlisttitle">${escapeHtml(playlist.nama_playlist)}</h2>
+
+                        <!-- ICON TITIK 3 -->
+                        <div class="item-box">
+                            <img src="/logotitik3.png"
+                                class="icon-more"
+                                onclick="toggleMenu(this)" />
+
+                            <!-- MENU YANG MUNCUL -->
+                            <div class="more-menu d-none">
+                                <div class="more-item" onclick="openJadwal()">Jadwal</div>
+                                <div class="more-item"
+                                    onclick="openHapus(${playlist.id}, '${escapeHtml(playlist.nama_playlist)}')">
+                                    Hapus Playlist
+                                </div>
+                                <div class="more-item"
+                                    onclick="openGanti(${playlist.id}, '${escapeHtml(playlist.nama_playlist)}')">
+                                    Ganti Nama
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="playlist-detail-buttons">
+                        <button class="btn-play-all">► Putar Semua</button>
+                        <button class="btn-add-content" data-playlist-id="${playlist.id}">
+                            Tambah Konten +
+                        </button>
+                    </div>
+
+                    ${rows}
+                `;
+
             } catch (err) {
                 console.error(err);
                 alert('Gagal memuat playlist');

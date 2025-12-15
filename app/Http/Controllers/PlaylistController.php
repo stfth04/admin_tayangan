@@ -14,11 +14,23 @@ class PlaylistController extends Controller
     // TAMPILKAN SEMUA PLAYLIST (WAJIB ADA)
     public function index()
     {
-        $playlists = Playlist::orderBy('id', 'desc')->get();
+        $playlists = Playlist::with([
+            'contents' => function ($q) {
+                // ambil konten PERTAMA di playlist (untuk thumbnail)
+                $q->orderBy('playlist_content.order', 'asc')->limit(1);
+            }
+        ])->orderBy('id', 'desc')->get();
+
+        // inject thumbnail otomatis dari konten pertama
+        foreach ($playlists as $playlist) {
+            $playlist->thumb_auto = optional($playlist->contents->first())->thumbnail;
+        }
+
         $konten = Content::orderBy('id', 'asc')->get();
 
         return view('admin.admin', compact('playlists', 'konten'));
     }
+
 
     // SIMPAN PLAYLIST BARU
     public function store(Request $request)
@@ -46,14 +58,21 @@ class PlaylistController extends Controller
             $playlist = Playlist::findOrFail($playlist_id);
             $content = Content::findOrFail($content_id);
 
+            // ===============================
+            // HITUNG ORDER TERAKHIR
+            // ===============================
+            $lastOrder = DB::table('playlist_content')
+                ->where('playlist_id', $playlist_id)
+                ->max('order');
+
+            $newOrder = is_null($lastOrder) ? 1 : $lastOrder + 1;
+
+            // ===============================
+            // HITUNG DURASI (VIDEO)
+            // ===============================
             $duration = 0;
-
-            // NORMALISASI PATH WINDOWS
             $fileRelativePath = str_replace('\\', '/', $content->file);
-
-            // contoh: uploads/Tes.mp4
             $path = storage_path('app/public/' . $fileRelativePath);
-
 
             $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
 
@@ -64,28 +83,19 @@ class PlaylistController extends Controller
                         'ffmpeg.binaries' => config('services.ffmpeg.ffmpeg'),
                     ]);
 
-                    $duration = (int) $ffprobe
-                        ->format($path)
-                        ->get('duration');
-                    \Log::info('VIDEO DURATION', [
-                        'duration' => $duration,
-                        'file' => $path
-                    ]);
-
+                    $duration = (int) $ffprobe->format($path)->get('duration');
                 } catch (\Throwable $e) {
-                    \Log::error('FFProbe error', [
-                        'file' => $path,
-                        'error' => $e->getMessage()
-                    ]);
-                    $duration = 0;
+                    \Log::error('FFProbe error', ['error' => $e->getMessage()]);
                 }
             }
 
-
-
+            // ===============================
+            // INSERT KE PIVOT
+            // ===============================
             DB::table('playlist_content')->insert([
                 'playlist_id' => $playlist_id,
                 'content_id' => $content_id,
+                'order' => $newOrder, // 🔥 FIX
                 'duration' => $duration,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -103,8 +113,6 @@ class PlaylistController extends Controller
             ], 500);
         }
     }
-
-
 
     // UPDATE NAMA PLAYLIST via AJAX
     public function updateName(Request $request)
