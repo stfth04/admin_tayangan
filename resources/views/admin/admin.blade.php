@@ -1527,7 +1527,7 @@
                 let rows = '';
 
                 if (items.length === 0) {
-                    rows = `<p class="playlist-empty">Playlist masih kosong</p>`;
+                    rows = `<p class="playlist-empty">Video atau Foto tidak ada</p>`;
                 } else {
                     rows = `
             <div class="table-container mt-4">
@@ -1548,11 +1548,11 @@
                                 : `<img src="/storage/${item.file}" style="width:160px">`;
 
                             return `
-                                                                    <tr>
-                                                                        <td>${i + 1}</td>
-                                                                        <td>${preview}</td>
-                                                                        <td>${item.duration ?? '-'}</td>
-                                                                    </tr>`;
+                                                                        <tr>
+                                                                            <td>${i + 1}</td>
+                                                                            <td>${preview}</td>
+                                                                            <td>${typeof item.duration === 'number' ? item.duration + 's' : '-'}</td>
+                                                                        </tr>`;
                         }).join('')}
                     </tbody>
                 </table>
