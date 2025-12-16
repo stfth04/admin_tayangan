@@ -190,46 +190,39 @@ class PlaylistController extends Controller
             'contents' => $konten
         ]);
     }
-    public function play($playlistId)
+    private function renderPlaylist($playlist)
     {
-        $playlist = Playlist::findOrFail($playlistId);
-
         $contents = DB::table('playlist_content as pc')
             ->join('contents as c', 'pc.content_id', '=', 'c.id')
-            ->where('pc.playlist_id', $playlistId)
+            ->where('pc.playlist_id', $playlist->id)
             ->orderBy('pc.order', 'asc')
-            ->select([
-                'c.file',
-                'c.nama_file',
-                'pc.duration'
-            ])
+            ->select('c.file', 'c.nama_file', 'pc.duration')
             ->get();
 
         return view('welcome', compact('playlist', 'contents'));
     }
 
+    public function play($playlistId)
+    {
+        return $this->renderPlaylist(
+            Playlist::findOrFail($playlistId)
+        );
+    }
+
     public function root()
     {
-        // ambil playlist pertama (atau playlist aktif kalau nanti ada flag)
-        $playlist = Playlist::orderBy('id', 'asc')->first();
+        $playlist = Playlist::whereHas('contents')
+            ->orderBy('id', 'asc')
+            ->first();
 
         if (!$playlist) {
-            // TIDAK ADA PLAYLIST
             return view('welcome', [
                 'playlist' => null,
                 'contents' => [],
             ]);
         }
 
-        $contents = DB::table('playlist_content as pc')
-            ->join('contents as c', 'pc.content_id', '=', 'c.id')
-            ->where('pc.playlist_id', $playlist->id)
-            ->orderBy('pc.order', 'asc')
-            ->select('c.file', 'pc.duration')
-            ->get();
-
-        return view('welcome', compact('playlist', 'contents'));
+        return $this->renderPlaylist($playlist);
     }
-
 
 }

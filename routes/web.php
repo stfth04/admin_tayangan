@@ -58,7 +58,3 @@ Route::get('/admin/playlist/{id}/content', [PlaylistController::class, 'getConte
 
 // Tambah konten ke playlist (form hidden)
 Route::post('/playlist-content-add', [PlaylistController::class, 'addContent'])->name('playlist.addContent');
-
-// Playlist Aktif
-Route::get('/play/{playlist}', [PlaylistController::class, 'play'])
-    ->name('playlist.play');

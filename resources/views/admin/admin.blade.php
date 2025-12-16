@@ -1023,7 +1023,8 @@
                         <div class="playlist-info">
                             <p class="playlist-title">{{ $playlist->nama_playlist }}</p>
                             @if (isset($playlist->jumlah_content))
-                                <small style="color:#7f8c8d;font-size:12px;">{{ $playlist->jumlah_content }} lagu</small>
+                                <small style="color:#7f8c8d;font-size:12px;">{{ $playlist->jumlah_content }}
+                                    lagu</small>
                             @endif
                         </div>
                     </div>
@@ -1570,11 +1571,11 @@
                                 : `<img src="/storage/${item.file}" style="width:160px">`;
 
                             return `
-                                                                                        <tr>
-                                                                                            <td>${i + 1}</td>
-                                                                                            <td>${preview}</td>
-                                                                                            <td>${typeof item.duration === 'number' ? item.duration + 's' : '-'}</td>
-                                                                                        </tr>`;
+                                                                                                        <tr>
+                                                                                                            <td>${i + 1}</td>
+                                                                                                            <td>${preview}</td>
+                                                                                                            <td>${typeof item.duration === 'number' ? item.duration + 's' : '-'}</td>
+                                                                                                        </tr>`;
                         }).join('')}
                     </tbody>
                 </table>
@@ -1612,14 +1613,13 @@
 
                     <div class="playlist-detail-buttons">
                         <button class="btn-play-all"
-                            onclick="window.open('/play/${playlist.id}', '_blank')">
+                             onclick="window.open('/play/${playlist.id}', '_blank')">
                             ► Putar Semua
                         </button>
                         <button class="btn-add-content" data-playlist-id="${playlist.id}">
                             Tambah Konten +
                         </button>
                     </div>
-
                     ${rows}
                 `;
 
