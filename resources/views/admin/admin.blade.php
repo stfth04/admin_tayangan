@@ -937,6 +937,7 @@
             <a href="#" class="text-white text-decoration-none" onclick="showTab('kelola', event)">Kelola
                 Konten</a>
             <a href="#" class="text-white text-decoration-none" onclick="showTab('playlist', event)">Playlist</a>
+            <a href="#" class="text-white text-decoration-none" onclick="showTab('preview', event)">Preview</a>
         </div>
     </div>
 
@@ -1610,7 +1611,10 @@
                     </div>
 
                     <div class="playlist-detail-buttons">
-                        <button class="btn-play-all">► Putar Semua</button>
+                        <button class="btn-play-all"
+                            onclick="window.open('/play/${playlist.id}', '_blank')">
+                            ► Putar Semua
+                        </button>
                         <button class="btn-add-content" data-playlist-id="${playlist.id}">
                             Tambah Konten +
                         </button>

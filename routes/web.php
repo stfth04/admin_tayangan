@@ -13,9 +13,9 @@ use App\Http\Controllers\PlaylistController;
 */
 
 // Halaman utama
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', [PlaylistController::class, 'root']);
+Route::get('/play/{playlist}', [PlaylistController::class, 'play'])
+    ->name('playlist.play');
 
 // LOGIN
 Route::get('/login', function () {
@@ -59,4 +59,6 @@ Route::get('/admin/playlist/{id}/content', [PlaylistController::class, 'getConte
 // Tambah konten ke playlist (form hidden)
 Route::post('/playlist-content-add', [PlaylistController::class, 'addContent'])->name('playlist.addContent');
 
-
+// Playlist Aktif
+Route::get('/play/{playlist}', [PlaylistController::class, 'play'])
+    ->name('playlist.play');

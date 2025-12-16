@@ -1,0 +1,19 @@
+body {
+    margin: 0;
+    background: black;
+    overflow: hidden;
+}
+
+#player {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+video,
+img {
+    max-width: 100%;
+    max-height: 100%;
+}
