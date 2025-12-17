@@ -1037,6 +1037,29 @@
         </div>
     </div>
 
+    {{-- ========================= PREVIEW TAB ========================= --}}
+    <div id="preview" class="tab-content d-none">
+        <div class="container mt-4">
+            {{-- <h5><strong>Preview Playlist Aktif</strong></h5> --}}
+
+            <div id="previewPlayer"
+                style="
+                width: 100%;
+                height: 450px;
+                background: #000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 12px;
+                overflow: hidden;
+            ">
+                <span style="color:#aaa">Klik tab Preview</span>
+            </div>
+        </div>
+    </div>
+    {{-- ======================= END PREVIEW TAB ======================= --}}
+
+
 
     {{-- ========================= KELOLA TAB ========================= --}}
 
@@ -1165,14 +1188,32 @@
     {{-- ========================= SCRIPTS (single place) ========================= --}}
     <script>
         // showTab helper (keperluan navbar tabs)
+        // showTab helper (navbar tabs)
         function showTab(tabId, event) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('d-none'));
-            document.getElementById(tabId).classList.remove('d-none');
+            if (event) event.preventDefault();
 
-            // highlight active tab link
-            document.querySelectorAll('.container.d-flex a').forEach(a => a.classList.remove('active-tab'));
-            if (event && event.target) event.target.classList.add('active-tab');
+            // sembunyikan semua tab
+            document.querySelectorAll('.tab-content')
+                .forEach(el => el.classList.add('d-none'));
+
+            // tampilkan tab tujuan
+            const tab = document.getElementById(tabId);
+            if (tab) tab.classList.remove('d-none');
+
+            // highlight active tab
+            document.querySelectorAll('.container.d-flex a')
+                .forEach(a => a.classList.remove('active-tab'));
+
+            if (event && event.target) {
+                event.target.classList.add('active-tab');
+            }
+
+            // 🔥 KHUSUS PREVIEW
+            if (tabId === 'preview' && typeof loadActivePreview === 'function') {
+                loadActivePreview();
+            }
         }
+
 
         // openTab for programmatic navigation (used by server side session show_tab)
         function openTab(tabId) {
@@ -1571,17 +1612,17 @@
                                 : `<img src="/storage/${item.file}" style="width:160px">`;
 
                             return `
-                                                                                                                            <tr>
-                                                                                                                                <td>${i + 1}</td>
-                                                                                                                                <td>${preview}</td>
-                                                                                                                                <td>${typeof item.duration === 'number' ? item.duration + 's' : '-'}</td>
-                                                                                                                                <td>
-                                                                                                                                    <button class="btn-aksi text-danger"
-                                                                                                                                    onclick="hapusKonten(${item.pc_id})">
-                                                                                                                                    Hapus
-                                                                                                                                    </button>
+                                                                                                                                                <tr>
+                                                                                                                                                    <td>${i + 1}</td>
+                                                                                                                                                    <td>${preview}</td>
+                                                                                                                                                    <td>${typeof item.duration === 'number' ? item.duration + 's' : '-'}</td>
+                                                                                                                                                    <td>
+                                                                                                                                                        <button class="btn-aksi text-danger"
+                                                                                                                                                        onclick="hapusKonten(${item.pc_id})">
+                                                                                                                                                        Hapus
+                                                                                                                                                        </button>
 
-                                                                                                                            </tr>`;
+                                                                                                                                                </tr>`;
                         }).join('')}
                     </tbody>
                 </table>
@@ -1756,6 +1797,91 @@
                     alert('Terjadi kesalahan');
                     console.error(err);
                 });
+        }
+        let previewIndex = 0;
+        let previewTimer = null;
+        let previewList = [];
+
+        const VIDEO_EXT = ['mp4', 'mov', 'avi', 'mkv', 'webm'];
+        const IMAGE_EXT = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+
+        const previewPlayer = document.getElementById('previewPlayer');
+
+        // ambil playlist aktif dari session lewat blade
+        const ACTIVE_PLAYLIST_ID = @json(session('last_playlist_id'));
+
+        function loadActivePreview() {
+            if (!previewPlayer) {
+                console.warn('previewPlayer element not found');
+                return;
+            }
+
+            if (!ACTIVE_PLAYLIST_ID) {
+                previewPlayer.innerHTML =
+                    '<span style="color:#aaa">Belum ada playlist diputar</span>';
+                return;
+            }
+
+            fetch(`/admin/playlist/${ACTIVE_PLAYLIST_ID}/content`)
+                .then(res => res.json())
+                .then(data => {
+                    previewList = data.contents || [];
+                    previewIndex = 0;
+
+                    if (!previewList.length) {
+                        previewPlayer.innerHTML =
+                            '<span style="color:#aaa">Playlist kosong</span>';
+                        return;
+                    }
+
+                    playPreview();
+                });
+        }
+
+
+        function playPreview() {
+            clearTimeout(previewTimer);
+            previewPlayer.innerHTML = '';
+
+            const item = previewList[previewIndex];
+            const file = `/storage/${item.file}`;
+            const ext = file.split('.').pop().toLowerCase();
+
+            if (VIDEO_EXT.includes(ext)) {
+                const video = document.createElement('video');
+                video.src = file;
+                video.autoplay = true;
+                video.muted = true;
+                video.style.maxWidth = '100%';
+                video.style.maxHeight = '100%';
+                video.onended = nextPreview;
+                previewPlayer.appendChild(video);
+                return;
+            }
+
+            if (IMAGE_EXT.includes(ext)) {
+                const img = document.createElement('img');
+                img.src = file;
+                img.style.maxWidth = '100%';
+                img.style.maxHeight = '100%';
+                previewPlayer.appendChild(img);
+
+                const dur = item.duration && item.duration > 0 ? item.duration : 5;
+                previewTimer = setTimeout(nextPreview, dur * 1000);
+            }
+        }
+
+        function nextPreview() {
+            previewIndex++;
+            if (previewIndex >= previewList.length) previewIndex = 0;
+            playPreview();
+        }
+
+        function stopPreview() {
+            if (previewTimer) {
+                clearTimeout(previewTimer);
+                previewTimer = null;
+            }
         }
     </script>
     <!-- ====================== END SCRIPT ====================== -->
