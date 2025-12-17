@@ -403,6 +403,22 @@
             cursor: pointer;
         }
 
+        .preview-player {
+            width: 100%;
+            height: 450px;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .preview-placeholder {
+            color: #aaa;
+        }
+
+
         /* SIMPAN BUTTON */
         .btn-save {
             width: 50%;
@@ -1040,23 +1056,12 @@
     {{-- ========================= PREVIEW TAB ========================= --}}
     <div id="preview" class="tab-content d-none">
         <div class="container mt-4">
-            {{-- <h5><strong>Preview Playlist Aktif</strong></h5> --}}
-
-            <div id="previewPlayer"
-                style="
-                width: 100%;
-                height: 450px;
-                background: #000;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                border-radius: 12px;
-                overflow: hidden;
-            ">
-                <span style="color:#aaa">Klik tab Preview</span>
+            <div id="previewPlayer" class="preview-player">
+                <span class="preview-placeholder">Klik tab Preview</span>
             </div>
         </div>
     </div>
+
     {{-- ======================= END PREVIEW TAB ======================= --}}
 
 
@@ -1612,17 +1617,17 @@
                                 : `<img src="/storage/${item.file}" style="width:160px">`;
 
                             return `
-                                                                                                                                                <tr>
-                                                                                                                                                    <td>${i + 1}</td>
-                                                                                                                                                    <td>${preview}</td>
-                                                                                                                                                    <td>${typeof item.duration === 'number' ? item.duration + 's' : '-'}</td>
-                                                                                                                                                    <td>
-                                                                                                                                                        <button class="btn-aksi text-danger"
-                                                                                                                                                        onclick="hapusKonten(${item.pc_id})">
-                                                                                                                                                        Hapus
-                                                                                                                                                        </button>
+                                                                                                                                                    <tr>
+                                                                                                                                                        <td>${i + 1}</td>
+                                                                                                                                                        <td>${preview}</td>
+                                                                                                                                                        <td>${typeof item.duration === 'number' ? item.duration + 's' : '-'}</td>
+                                                                                                                                                        <td>
+                                                                                                                                                            <button class="btn-aksi text-danger"
+                                                                                                                                                            onclick="hapusKonten(${item.pc_id})">
+                                                                                                                                                            Hapus
+                                                                                                                                                            </button>
 
-                                                                                                                                                </tr>`;
+                                                                                                                                                    </tr>`;
                         }).join('')}
                     </tbody>
                 </table>
