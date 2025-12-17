@@ -220,17 +220,10 @@ class PlaylistController extends Controller
             return redirect()->route('playlist.play', $lastPlaylistId);
         }
 
-        // fallback kalau belum pernah play apa pun
-        $playlist = Playlist::whereHas('contents')
-            ->orderBy('id', 'asc')
-            ->first();
-
-        if (!$playlist) {
-            abort(404);
-        }
-
-        return redirect()->route('playlist.play', $playlist->id);
+        // JANGAN redirect ke playlist apa pun
+        return view('welcome'); // atau halaman idle / kosong
     }
+
 
 
     // HAPUS KONTEN DARI PLAYLIST (PIVOT)

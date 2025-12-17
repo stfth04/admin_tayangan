@@ -17,6 +17,12 @@ Route::get('/', [PlaylistController::class, 'root']);
 Route::get('/play/{playlist}', [PlaylistController::class, 'play'])
     ->name('playlist.play');
 
+// stop playlist diputar
+Route::post('/stop-playlist', function () {
+    session()->forget('last_playlist_id');
+    return response()->json(['success' => true]);
+});
+
 // LOGIN
 Route::get('/login', function () {
     return view('admin.login');

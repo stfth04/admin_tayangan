@@ -6,11 +6,11 @@ let timer = null;
 let stopped = false;
 let started = false;
 
-const VIDEO_EXT = ['mp4', 'mov', 'avi', 'mkv', 'webm'];
-const IMAGE_EXT = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+const VIDEO_EXT = ["mp4", "mov", "avi", "mkv", "webm"];
+const IMAGE_EXT = ["jpg", "jpeg", "png", "gif", "webp"];
 
-const player = document.getElementById('player');
-const btnStop = document.getElementById('btnStop');
+const player = document.getElementById("player");
+const btnStop = document.getElementById("btnStop");
 
 /* =======================
    PLAY NEXT ITEM
@@ -20,7 +20,7 @@ function playNext() {
 
     clearTimeout(timer);
     timer = null;
-    player.innerHTML = '';
+    player.innerHTML = "";
 
     const item = window.PLAYLIST[index];
     if (!item || !item.file) {
@@ -29,16 +29,16 @@ function playNext() {
     }
 
     const file = `/storage/${item.file}`;
-    const clean = file.split('?')[0];
-    const ext = clean.split('.').pop().toLowerCase();
+    const clean = file.split("?")[0];
+    const ext = clean.split(".").pop().toLowerCase();
 
     /* ===== VIDEO ===== */
     if (VIDEO_EXT.includes(ext)) {
-        const video = document.createElement('video');
+        const video = document.createElement("video");
         video.src = file;
         video.muted = true;
         video.playsInline = true;
-        video.preload = 'auto';
+        video.preload = "auto";
 
         video.onended = next;
         video.onerror = next;
@@ -55,15 +55,13 @@ function playNext() {
 
     /* ===== IMAGE ===== */
     if (IMAGE_EXT.includes(ext)) {
-        const img = document.createElement('img');
+        const img = document.createElement("img");
         img.src = file;
 
         img.onload = () => {
             // 🔥 DEFAULT 10 DETIK JIKA duration = 0 / null
             const imageDuration =
-                item.duration && item.duration > 0
-                    ? item.duration
-                    : 10;
+                item.duration && item.duration > 0 ? item.duration : 10;
 
             timer = setTimeout(next, imageDuration * 1000);
         };
@@ -75,7 +73,7 @@ function playNext() {
     }
 
     /* ===== FORMAT TIDAK DIDUKUNG ===== */
-    console.warn('Format tidak didukung:', file);
+    console.warn("Format tidak didukung:", file);
     next();
 }
 
@@ -92,22 +90,32 @@ function next() {
    STOP BUTTON
 ======================= */
 if (btnStop) {
-    btnStop.addEventListener('click', () => {
+    btnStop.addEventListener("click", async () => {
         stopped = true;
         started = false;
 
         clearTimeout(timer);
         timer = null;
+        player.innerHTML = "";
 
-        player.innerHTML = '';
-
-        // keluar fullscreen jika ada
         if (document.fullscreenElement) {
             document.exitFullscreen().catch(() => {});
         }
 
-        // keluar mode player
-        window.location.href = '/admin';
+        // 🔥 hapus session playlist terakhir
+        try {
+            await fetch("/stop-playlist", {
+                method: "POST",
+                headers: {
+                    "X-CSRF-TOKEN": document
+                        .querySelector('meta[name="csrf-token"]')
+                        ?.getAttribute("content"),
+                },
+            });
+        } catch (e) {}
+
+        // kembali ke root
+        window.location.href = "/admin";
     });
 }
 
@@ -115,7 +123,7 @@ if (btnStop) {
    START (USER GESTURE)
 ======================= */
 document.addEventListener(
-    'click',
+    "click",
     () => {
         if (!started) {
             started = true;
