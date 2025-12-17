@@ -204,6 +204,9 @@ class PlaylistController extends Controller
 
     public function play($playlistId)
     {
+        // simpan playlist terakhir yang diputar
+        session(['last_playlist_id' => $playlistId]);
+
         return $this->renderPlaylist(
             Playlist::findOrFail($playlistId)
         );
@@ -211,6 +214,13 @@ class PlaylistController extends Controller
 
     public function root()
     {
+        $lastPlaylistId = session('last_playlist_id');
+
+        if ($lastPlaylistId) {
+            return redirect()->route('playlist.play', $lastPlaylistId);
+        }
+
+        // fallback kalau belum pernah play apa pun
         $playlist = Playlist::whereHas('contents')
             ->orderBy('id', 'asc')
             ->first();
@@ -221,6 +231,7 @@ class PlaylistController extends Controller
 
         return redirect()->route('playlist.play', $playlist->id);
     }
+
 
     // HAPUS KONTEN DARI PLAYLIST (PIVOT)
     public function deleteContent($id)
