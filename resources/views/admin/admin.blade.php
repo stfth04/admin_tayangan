@@ -1571,11 +1571,17 @@
                                 : `<img src="/storage/${item.file}" style="width:160px">`;
 
                             return `
-                                                                                                        <tr>
-                                                                                                            <td>${i + 1}</td>
-                                                                                                            <td>${preview}</td>
-                                                                                                            <td>${typeof item.duration === 'number' ? item.duration + 's' : '-'}</td>
-                                                                                                        </tr>`;
+                                                                                                                            <tr>
+                                                                                                                                <td>${i + 1}</td>
+                                                                                                                                <td>${preview}</td>
+                                                                                                                                <td>${typeof item.duration === 'number' ? item.duration + 's' : '-'}</td>
+                                                                                                                                <td>
+                                                                                                                                    <button class="btn-aksi text-danger"
+                                                                                                                                    onclick="hapusKonten(${item.pc_id})">
+                                                                                                                                    Hapus
+                                                                                                                                    </button>
+
+                                                                                                                            </tr>`;
                         }).join('')}
                     </tbody>
                 </table>
@@ -1726,6 +1732,31 @@
         document.addEventListener('DOMContentLoaded', () => {
             showTab('upload');
         });
+        // hapus konten dari playlist
+        function hapusKonten(pc_id) {
+            if (!confirm('Hapus konten ini dari playlist?')) return;
+
+            fetch(`/playlist-content/${pc_id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        location.reload(); // atau hapus row DOM
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(err => {
+                    alert('Terjadi kesalahan');
+                    console.error(err);
+                });
+        }
     </script>
     <!-- ====================== END SCRIPT ====================== -->
 

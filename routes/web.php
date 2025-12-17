@@ -58,3 +58,7 @@ Route::get('/admin/playlist/{id}/content', [PlaylistController::class, 'getConte
 
 // Tambah konten ke playlist (form hidden)
 Route::post('/playlist-content-add', [PlaylistController::class, 'addContent'])->name('playlist.addContent');
+
+// Hapus konten dari playlist
+Route::delete('/playlist-content/{id}', [PlaylistController::class, 'deleteContent'])
+    ->name('playlist.content.delete');

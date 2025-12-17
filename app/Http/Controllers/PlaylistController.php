@@ -60,7 +60,7 @@ class PlaylistController extends Controller
 
             // ===============================
             // HITUNG ORDER TERAKHIR
-            // ===============================
+            // ===============================x`
             $lastOrder = DB::table('playlist_content')
                 ->where('playlist_id', $playlist_id)
                 ->max('order');
@@ -216,13 +216,39 @@ class PlaylistController extends Controller
             ->first();
 
         if (!$playlist) {
-            return view('welcome', [
-                'playlist' => null,
-                'contents' => [],
-            ]);
+            abort(404);
         }
 
-        return $this->renderPlaylist($playlist);
+        return redirect()->route('playlist.play', $playlist->id);
+    }
+
+    // HAPUS KONTEN DARI PLAYLIST (PIVOT)
+    public function deleteContent($id)
+    {
+        $pc = PlaylistContent::find($id);
+
+        if (!$pc) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Konten playlist tidak ditemukan'
+            ], 404);
+        }
+
+        $playlistId = $pc->playlist_id;
+        $deletedOrder = $pc->order;
+
+        // hapus pivot
+        $pc->delete();
+
+        // rapikan ulang order setelah yang dihapus
+        PlaylistContent::where('playlist_id', $playlistId)
+            ->where('order', '>', $deletedOrder)
+            ->decrement('order');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Konten berhasil dihapus dari playlist'
+        ]);
     }
 
 }

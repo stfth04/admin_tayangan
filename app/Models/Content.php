@@ -17,13 +17,15 @@ class Content extends Model
         'jenis'
     ];
 
-   public function playlists()
-{
-    return $this->belongsToMany(
-        Playlist::class,
-        'playlist_content',
-        'content_id',
-        'playlist_id'
-    );
-}
+    public function playlists()
+    {
+        return $this->belongsToMany(
+            Playlist::class,
+            'playlist_content',
+            'content_id',
+            'playlist_id'
+        )
+            ->using(PlaylistContent::class)
+            ->withPivot(['order', 'duration']);
+    }
 }

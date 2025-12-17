@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Tayangan Seputar BPS</title>
+    <link rel="icon" type="image/png" href="/logo_bps.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     @vite('resources/css/player.css')

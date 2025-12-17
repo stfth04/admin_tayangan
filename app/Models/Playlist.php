@@ -20,10 +20,14 @@ class Playlist extends Model
     public function contents()
     {
         return $this->belongsToMany(
-            Content::class,      // model tujuan
-            'playlist_content',  // nama tabel pivot
-            'playlist_id',       // fk di pivot
-            'content_id'         // fk di pivot
-        );
+            Content::class,
+            'playlist_content',
+            'playlist_id',
+            'content_id'
+        )
+            ->using(PlaylistContent::class)
+            ->withPivot(['order', 'duration'])
+            ->orderByPivot('order');
     }
+
 }
