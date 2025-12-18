@@ -886,7 +886,7 @@
         .modal-custom {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, .4);
+            background: rgba(0, 0, 0, .35);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -894,24 +894,128 @@
         }
 
         .modal-box {
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            width: 300px;
+            background: #f5f7fa;
+            border-radius: 16px;
+            width: 380px;
+            padding: 20px 22px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .15);
         }
 
-        .modal-actions {
-            margin-top: 15px;
+        /* HEADER */
+        .modal-header {
+            position: relative;
             display: flex;
-            justify-content: flex-end;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        /* Judul benar-benar center */
+        .modal-header h4 {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        /* Tombol close tetap kanan */
+        .modal-close {
+            margin-left: auto;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+
+        /* BODY */
+        .modal-body {
+            display: flex;
+            flex-direction: column;
             gap: 10px;
         }
 
+        .label {
+            font-size: 13px;
+            color: #555;
+        }
+
+        .input-text {
+            background: #e0e0e0;
+            border: none;
+            border-radius: 10px;
+            padding: 8px 12px;
+        }
+
+        /* TIME INPUT */
+        .time-inputs {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .time-inputs input {
+            width: 60px;
+            text-align: center;
+            padding: 8px;
+            border-radius: 10px;
+            border: none;
+            background: #e0e0e0;
+            font-size: 14px;
+        }
+
+        .time-inputs span {
+            font-weight: bold;
+        }
+
+        /* ACTIONS */
+        .modal-actions {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .btn-cancel {
+            background: #dcdcdc;
+            border: none;
+            padding: 8px 22px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        .btn-save {
+            background: #2b6f9e;
+            color: #fff;
+            border: none;
+            padding: 8px 26px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        /* ICON PENSIL */
         .btn-edit-duration {
-            margin-left: 6px;
+            margin-left: 8px;
             border: none;
             background: none;
+            font-size: 14px;
             cursor: pointer;
+        }
+
+        .input-duration {
+            width: 100%;
+            padding: 8px 18px;
+            border-radius: 999px;
+            /* bikin pill */
+            border: none;
+            background: #e5e5e5;
+            /* mirip tombol batal */
+            text-align: center;
+            font-size: 14px;
+            font-weight: 500;
+            outline: none;
         }
     </style>
 </head>
@@ -1614,16 +1718,31 @@
 
     <div id="durationModal" class="modal-custom d-none">
         <div class="modal-box">
-            <h3>Atur Durasi Gambar</h3>
 
-            <input type="number" id="durationInput" min="1" step="1" placeholder="Durasi (detik)">
+            <!-- Judul playlist (read-only) -->
+
+            <div class="modal-header">
+    <h4>Atur Durasi Konten</h4>
+    <button class="modal-close" onclick="closeDurationModal()">×</button>
+</div>
+
+<div class="modal-body">
+    <!-- Durasi -->
+    <label class="label">Durasi (detik)</label>
+    <input type="number" id="durationInput" min="1"
+        class="input-duration" placeholder="Contoh: 10">
+</div>
 
             <div class="modal-actions">
-                <button onclick="closeDurationModal()">Batal</button>
-                <button onclick="saveDuration()">Simpan</button>
+                <button class="btn-cancel" onclick="closeDurationModal()">Batal</button>
+                <button class="btn-save" onclick="saveDuration()">Simpan</button>
             </div>
+
         </div>
     </div>
+
+
+
 
 
 
@@ -1663,27 +1782,27 @@
                                 : `<img src="/storage/${item.file}" style="width:160px">`;
 
                             return `
-                                                                                                                                                                        <tr>
-                                                                                                                                                                            <td>${i + 1}</td>
-                                                                                                                                                                            <td>${preview}</td>
-                                                                                                                                                                            <td>
-                                                                                                                                                                                ${typeof item.duration === 'number' ? item.duration + 's' : '-'}
-                                                                                                                                                                                ${item.jenis === 'Gambar' ? `
+                                                                                                                                                                                                <tr>
+                                                                                                                                                                                                    <td>${i + 1}</td>
+                                                                                                                                                                                                    <td>${preview}</td>
+                                                                                                                                                                                                    <td>
+                                                                                                                                                                                                        ${typeof item.duration === 'number' ? item.duration + 's' : '-'}
+                                                                                                                                                                                                        ${item.jenis === 'Gambar' ? `
                                                                                                                                                                 <button class="btn-edit-duration"
                                                                                                                                                                     onclick="openDurationModal(${item.pc_id}, ${item.duration ?? 5})"
                                                                                                                                                                     title="Atur durasi">
                                                                                                                                                                     ✎
                                                                                                                                                                 </button>
                                                                                                                                                             ` : ''}
-                                                                                                                                                                            </td>
+                                                                                                                                                                                                    </td>
 
-                                                                                                                                                                            <td>
-                                                                                                                                                                                <button class="btn-aksi text-danger"
-                                                                                                                                                                                onclick="hapusKonten(${item.pc_id})">
-                                                                                                                                                                                Hapus
-                                                                                                                                                                                </button>
+                                                                                                                                                                                                    <td>
+                                                                                                                                                                                                        <button class="btn-aksi text-danger"
+                                                                                                                                                                                                        onclick="hapusKonten(${item.pc_id})">
+                                                                                                                                                                                                        Hapus
+                                                                                                                                                                                                        </button>
 
-                                                                                                                                                                        </tr>`;
+                                                                                                                                                                                                </tr>`;
                         }).join('')}
                     </tbody>
                 </table>
