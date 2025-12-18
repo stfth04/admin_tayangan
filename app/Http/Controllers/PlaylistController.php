@@ -180,7 +180,8 @@ class PlaylistController extends Controller
                 DB::raw('pc.`order` as sort_order'),
                 'pc.duration',
                 'c.file',
-                'c.nama_file'
+                'c.nama_file',
+                'c.jenis',
             ])
             ->orderByRaw('pc.`order` ASC')
             ->get();
@@ -254,5 +255,19 @@ class PlaylistController extends Controller
             'message' => 'Konten berhasil dihapus dari playlist'
         ]);
     }
+    // UPDATE DURASI KONTEN DALAM PLAYLIST
+    public function updateDuration(Request $request, $id)
+    {
+        $request->validate([
+            'duration' => 'required|integer|min:1'
+        ]);
+
+        DB::table('playlist_content')
+            ->where('id', $id)
+            ->update(['duration' => $request->duration]);
+
+        return response()->json(['success' => true]);
+    }
+
 
 }

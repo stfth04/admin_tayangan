@@ -68,3 +68,9 @@ Route::post('/playlist-content-add', [PlaylistController::class, 'addContent'])-
 // Hapus konten dari playlist
 Route::delete('/playlist-content/{id}', [PlaylistController::class, 'deleteContent'])
     ->name('playlist.content.delete');
+
+// Update urutan dan durasi konten dalam playlist
+Route::put(
+    '/admin/playlist-content/{id}/duration',
+    [PlaylistController::class, 'updateDuration']
+);

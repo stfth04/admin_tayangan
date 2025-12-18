@@ -882,6 +882,37 @@
                 width: 100%;
             }
         }
+
+        .modal-custom {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .modal-box {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            width: 300px;
+        }
+
+        .modal-actions {
+            margin-top: 15px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .btn-edit-duration {
+            margin-left: 6px;
+            border: none;
+            background: none;
+            cursor: pointer;
+        }
     </style>
 </head>
 
@@ -1581,10 +1612,25 @@
         </div>
     </div>
 
+    <div id="durationModal" class="modal-custom d-none">
+        <div class="modal-box">
+            <h3>Atur Durasi Gambar</h3>
+
+            <input type="number" id="durationInput" min="1" step="1" placeholder="Durasi (detik)">
+
+            <div class="modal-actions">
+                <button onclick="closeDurationModal()">Batal</button>
+                <button onclick="saveDuration()">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+
 
     <!-- ====================== SCRIPT LOAD PLAYLIST DETAIL ====================== -->
     <script>
         async function loadPlaylistDetail(playlistId) {
+            activePlaylistId = playlistId;
             try {
                 const res = await fetch(`/admin/playlist/${playlistId}/content`);
                 if (!res.ok) throw new Error('Gagal mengambil data');
@@ -1617,17 +1663,27 @@
                                 : `<img src="/storage/${item.file}" style="width:160px">`;
 
                             return `
-                                                                                                                                                    <tr>
-                                                                                                                                                        <td>${i + 1}</td>
-                                                                                                                                                        <td>${preview}</td>
-                                                                                                                                                        <td>${typeof item.duration === 'number' ? item.duration + 's' : '-'}</td>
-                                                                                                                                                        <td>
-                                                                                                                                                            <button class="btn-aksi text-danger"
-                                                                                                                                                            onclick="hapusKonten(${item.pc_id})">
-                                                                                                                                                            Hapus
-                                                                                                                                                            </button>
+                                                                                                                                                                        <tr>
+                                                                                                                                                                            <td>${i + 1}</td>
+                                                                                                                                                                            <td>${preview}</td>
+                                                                                                                                                                            <td>
+                                                                                                                                                                                ${typeof item.duration === 'number' ? item.duration + 's' : '-'}
+                                                                                                                                                                                ${item.jenis === 'Gambar' ? `
+                                                                                                                                                                <button class="btn-edit-duration"
+                                                                                                                                                                    onclick="openDurationModal(${item.pc_id}, ${item.duration ?? 5})"
+                                                                                                                                                                    title="Atur durasi">
+                                                                                                                                                                    ✎
+                                                                                                                                                                </button>
+                                                                                                                                                            ` : ''}
+                                                                                                                                                                            </td>
 
-                                                                                                                                                    </tr>`;
+                                                                                                                                                                            <td>
+                                                                                                                                                                                <button class="btn-aksi text-danger"
+                                                                                                                                                                                onclick="hapusKonten(${item.pc_id})">
+                                                                                                                                                                                Hapus
+                                                                                                                                                                                </button>
+
+                                                                                                                                                                        </tr>`;
                         }).join('')}
                     </tbody>
                 </table>
@@ -1886,6 +1942,49 @@
             if (previewTimer) {
                 clearTimeout(previewTimer);
                 previewTimer = null;
+            }
+        }
+
+        let currentPcId = null;
+
+        function openDurationModal(pcId, currentDuration) {
+            currentPcId = pcId;
+            document.getElementById('durationInput').value = currentDuration || 5;
+            document.getElementById('durationModal').classList.remove('d-none');
+        }
+
+        function closeDurationModal() {
+            document.getElementById('durationModal').classList.add('d-none');
+            currentPcId = null;
+        }
+
+        async function saveDuration() {
+            const duration = document.getElementById('durationInput').value;
+
+            if (!duration || duration <= 0) {
+                alert('Durasi tidak valid');
+                return;
+            }
+
+            try {
+                const res = await fetch(`/admin/playlist-content/${currentPcId}/duration`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify({
+                        duration
+                    })
+                });
+
+                if (!res.ok) throw new Error();
+
+                closeDurationModal();
+                loadPlaylistDetail(activePlaylistId);
+
+            } catch {
+                alert('Gagal menyimpan durasi');
             }
         }
     </script>
