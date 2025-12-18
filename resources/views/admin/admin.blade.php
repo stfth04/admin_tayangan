@@ -1722,16 +1722,16 @@
             <!-- Judul playlist (read-only) -->
 
             <div class="modal-header">
-    <h4>Atur Durasi Konten</h4>
-    <button class="modal-close" onclick="closeDurationModal()">×</button>
-</div>
+                <h4>Atur Durasi Konten</h4>
+                <button class="modal-close" onclick="closeDurationModal()">×</button>
+            </div>
 
-<div class="modal-body">
-    <!-- Durasi -->
-    <label class="label">Durasi (detik)</label>
-    <input type="number" id="durationInput" min="1"
-        class="input-duration" placeholder="Contoh: 10">
-</div>
+            <div class="modal-body">
+                <!-- Durasi -->
+                <label class="label">Durasi (detik)</label>
+                <input type="number" id="durationInput" min="1" class="input-duration"
+                    placeholder="Contoh: 10">
+            </div>
 
             <div class="modal-actions">
                 <button class="btn-cancel" onclick="closeDurationModal()">Batal</button>
@@ -1781,29 +1781,30 @@
                                 ? `<video src="/storage/${item.file}" controls style="width:160px"></video>`
                                 : `<img src="/storage/${item.file}" style="width:160px">`;
 
-                            return `
-                                                                                                                                                                                                <tr>
-                                                                                                                                                                                                    <td>${i + 1}</td>
-                                                                                                                                                                                                    <td>${preview}</td>
-                                                                                                                                                                                                    <td>
-                                                                                                                                                                                                        ${typeof item.duration === 'number' ? item.duration + 's' : '-'}
-                                                                                                                                                                                                        ${item.jenis === 'Gambar' ? `
-                                                                                                                                                                <button class="btn-edit-duration"
-                                                                                                                                                                    onclick="openDurationModal(${item.pc_id}, ${item.duration ?? 5})"
-                                                                                                                                                                    title="Atur durasi">
-                                                                                                                                                                    ✎
-                                                                                                                                                                </button>
-                                                                                                                                                            ` : ''}
-                                                                                                                                                                                                    </td>
-
-                                                                                                                                                                                                    <td>
-                                                                                                                                                                                                        <button class="btn-aksi text-danger"
-                                                                                                                                                                                                        onclick="hapusKonten(${item.pc_id})">
-                                                                                                                                                                                                        Hapus
-                                                                                                                                                                                                        </button>
-
-                                                                                                                                                                                                </tr>`;
-                        }).join('')}
+                                return `
+        <tr id="row-${item.pc_id}">
+            <td>${i + 1}</td>
+            <td>${preview}</td>
+            <td>
+                ${typeof item.duration === 'number' ? item.duration + 's' : '-'}
+                ${item.jenis === 'Gambar' ? `
+            <button class="btn-edit-duration"
+                onclick="openDurationModal(${item.pc_id}, ${item.duration ?? 5})"
+                title="Atur durasi">
+                ✎
+            </button>
+        ` : ''}
+            </td>
+            <td>
+                <button type="button"
+                    class="btn-aksi text-danger"
+                    onclick="hapusKonten(${item.pc_id})">
+                    Hapus
+                </button>
+            </td>
+        </tr>
+        `;                                              
+                            }).join('')}
                     </tbody>
                 </table>
             </div>`;
@@ -1968,10 +1969,15 @@
                 .then(data => {
                     if (data.success) {
                         alert(data.message);
-                        location.reload(); // atau hapus row DOM
+
+                        const row = document.getElementById(`row-${pc_id}`);
+                        if (row) {
+                            row.remove();
+                        }
                     } else {
                         alert(data.message);
                     }
+
                 })
                 .catch(err => {
                     alert('Terjadi kesalahan');
